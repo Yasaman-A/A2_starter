@@ -20,10 +20,10 @@ event service over gRPC.
 ## Requirements
 
 - Python 3.9 or newer
-- A running MySQL server on 127.0.0.1:3306 with a `root` account that has no password
+- A running MySQL server on port with a username and password
 - `make`
 
-If your MySQL uses a different host, port, user or password, edit the `db` section of
+If your MySQL uses a host, port, user or password, other than values included edit the `db` section of
 `event_service/config.json` and `registration_service/config.json`, and the `MYSQL`
 variable at the top of the matching `Makefile`.
 
