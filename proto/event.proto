@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package campus.events.v1;
+
+service EventService {
+  rpc GetEvent(EventId) returns (Event);
+  rpc ReleaseSeat(EventId) returns (Empty);
+}
+
+message EventId { int64 event_id = 1; }
+message Event { int64 event_id = 1; string name = 2; int32 capacity = 3; int32 available_seats = 4; }
+message Empty {}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package campus.registrations.v1;
+
+service RegistrationService {
+  rpc CancelBooking(BookingId) returns (Empty);
+}
+
+message BookingId { int64 booking_id = 1; }
+message Empty {}
