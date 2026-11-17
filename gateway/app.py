@@ -40,9 +40,9 @@ def http_error(error):
 
 
 @app.get("/api/v1/events")
-def list_events():
-    abort(501, "TODO task 1: implement GET /api/v1/events")
-    #return jsonify(fields(events.GetEvent()))
+def list_events(EventRequest):
+    return jsonify(fields(events.ListEvent(EventRequest)))
+
 
 
 @app.get("/api/v1/events/<int:event_id>")
