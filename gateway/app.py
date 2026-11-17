@@ -38,10 +38,12 @@ def rpc_error(error):
 def http_error(error):
     return jsonify(error=error.description), error.code
 
-
+def manyfields():
+    return [fields(message) for message in messages]
 @app.get("/api/v1/events")
-def list_events(EventRequest):
-    return jsonify(fields(events.ListEvent(EventRequest)))
+def list_events():
+    name = request.args.get("name", "")
+    return jsonify(manyfields(events.ListEvents(event_pb2.ListEventsRequest(name=name)).events))
 
 
 
