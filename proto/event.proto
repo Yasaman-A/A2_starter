@@ -3,7 +3,8 @@ syntax = "proto3";
 package campus.events.v1;
 
 service EventService {
-  rpc GetEvent() returns (Event);
+  rpc ListEvents(ListEventRequest) returns (ListEventsResponse);
+  rpc CreateEvents(CreateEventsRequest) returns (Event);
   rpc GetEvent(EventId) returns (Event);
   rpc ReleaseSeat(EventId) returns (Empty);
 }
@@ -11,3 +12,6 @@ service EventService {
 message EventId { int64 event_id = 1; }
 message Event { int64 event_id = 1; string name = 2; int32 capacity = 3; int32 available_seats = 4; }
 message Empty {}
+message CreateEventsRequest{}
+message ListEventsRequest{optional string name = 1;}
+message ListEventsResponse{repeated Event events = 1;}
