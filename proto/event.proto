@@ -3,6 +3,7 @@ syntax = "proto3";
 package campus.events.v1;
 
 service EventService {
+  rpc GetEvent() returns (Event);
   rpc GetEvent(EventId) returns (Event);
   rpc ReleaseSeat(EventId) returns (Empty);
 }
