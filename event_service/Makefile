@@ -1,5 +1,5 @@
-PYTHON ?= ../.venv/Scripts/python
-MYSQL ?= mysql -h 127.0.0.1 -u root
+PYTHON ?= ../.venv/bin/python
+MYSQL ?= mysql -h 127.0.0.1 -u root -p
 
 gen:
 	mkdir -p generated

@@ -1,7 +1,8 @@
 import json
+from unicodedata import name
 
 import grpc
-from flask import Flask, abort, jsonify
+from flask import Flask, abort, jsonify, request
 from werkzeug.exceptions import HTTPException
 import event_pb2
 import event_pb2_grpc
@@ -29,6 +30,10 @@ def fields(message):
     return {field.name: getattr(message, field.name) for field in message.DESCRIPTOR.fields}
 
 
+def manyfields(messages):
+    return [fields(message) for message in messages]
+
+
 @app.errorhandler(grpc.RpcError)
 def rpc_error(error):
     return jsonify(error=error.details()), STATUS.get(error.code(), 500)
@@ -41,7 +46,8 @@ def http_error(error):
 
 @app.get("/api/v1/events")
 def list_events():
-    abort(501, "TODO task 1: implement GET /api/v1/events")
+    name = request.args.get("name", "")
+    return jsonify(manyfields(events.ListEvents(event_pb2.ListEventsRequest(name=name)).events))
 
 
 @app.get("/api/v1/events/<int:event_id>")
