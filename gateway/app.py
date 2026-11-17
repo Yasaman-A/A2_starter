@@ -57,7 +57,13 @@ def get_event(event_id):
 
 @app.post("/api/v1/events")
 def add_event():
-    abort(501, "TODO task 2: implement POST /api/v1/events")
+    data = request.get_json()
+
+    event = event_pb2.CreateEventRequest(**data)
+
+    result = events.CreateEvent(event)
+
+    return jsonify(fields(result)), 201
 
 
 @app.patch("/api/v1/events/<int:event_id>")

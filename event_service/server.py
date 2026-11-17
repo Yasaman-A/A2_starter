@@ -48,7 +48,22 @@ class EventService(rpc.EventServiceServicer):
         return pb.ListEventsResponse(
             events=found
         )
+    def CreateEvent(self, request, context):
+        if not request.name:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
 
+        if request.capacity <= 0:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event capacity must be positive")
+
+        try:
+            event_id = write(
+                "INSERT INTO events (name, capacity) VALUES (%s, %s)",
+                (request.name, request.capacity)
+            )
+        except mysql.connector.IntegrityError:
+            context.abort(grpc.StatusCode.ALREADY_EXISTS, "Event already exists")
+
+        return self.GetEvent(pb.EventId(event_id=event_id), context)
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
 rpc.add_EventServiceServicer_to_server(EventService(), server)
