@@ -13,5 +13,5 @@ message EventId { int64 event_id = 1; }
 message Event { int64 event_id = 1; string name = 2; int32 capacity = 3; int32 available_seats = 4; }
 message Empty {}
 message CreateEventsRequest{string name = 1; int32 capacity = 2;}
-message ListEventRequest{optional string name = 1;}
+message ListEventsRequest{optional string name = 1;}
 message ListEventsResponse{repeated Event events = 1;}
