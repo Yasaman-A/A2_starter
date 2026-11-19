@@ -39,7 +39,7 @@ class EventService(rpc.EventServiceServicer):
         if(request.name):
             found = read("""SELECT event_id, name, capacity, (capacity-seats) FROM events WHERE event_name LIKE %s ORDER BY event_id ASC; """,(request.name,),)
         else:
-            found = read("""SELECT event_id, event_name FROM events ORDER BY event_id ASC""")
+            found = read("""SELECT event_id, name, capacity (capacity-seats_taken) FROM events ORDER BY event_id ASC""")
         return pb.ListEventsResponse(events=found)
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
