@@ -1,7 +1,7 @@
 import json
 
 import grpc
-from flask import Flask, abort, jsonify
+from flask import Flask, abort, jsonify, request
 from werkzeug.exceptions import HTTPException
 import event_pb2
 import event_pb2_grpc
@@ -40,6 +40,7 @@ def http_error(error):
 
 def manyfields():
     return [fields(message) for message in messages]
+
 @app.get("/api/v1/events")
 def list_events():
     name = request.args.get("name", "")
