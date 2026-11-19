@@ -12,6 +12,7 @@ import registration_pb2_grpc
 CONFIG = json.load(open("config.json"))
 STATUS = {
     grpc.StatusCode.INVALID_ARGUMENT: 400,
+    grpc.StatusCode.UNAUTHENTICATED: 401, ## <-- New
     grpc.StatusCode.NOT_FOUND: 404,
     grpc.StatusCode.ALREADY_EXISTS: 409,
     grpc.StatusCode.RESOURCE_EXHAUSTED: 409,

@@ -65,6 +65,16 @@ class EventService(rpc.EventServiceServicer):
 
         return self.GetEvent(pb.EventId(event_id=event_id), context)
 
+    def BeforeRequest(self, request, context):
+        # Only protect event write endpoints
+        if (request.method in ("POST", "PATCH", "DELETE")):
+            if (request.path.startswith("/events")):
+                expected = f"Bearer {CONFIG['staff_token']}"
+                authorization = request.headers.get("Authorization", "")
+
+                if authorization != expected:
+                    return json.jsonify({"error": "Unauthorized"}), 401
+
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
 rpc.add_EventServiceServicer_to_server(EventService(), server)
 server.add_insecure_port(CONFIG["listen"])
