@@ -38,7 +38,7 @@ def rpc_error(error):
 def http_error(error):
     return jsonify(error=error.description), error.code
 
-def manyfields():
+def manyfields(messages):
     return [fields(message) for message in messages]
 
 @app.get("/api/v1/events")
