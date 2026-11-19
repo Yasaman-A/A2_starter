@@ -37,7 +37,7 @@ class EventService(rpc.EventServiceServicer):
 
     def ListEvents(self, request, context):
         if(request.name):
-            found = read("""SELECT event_id, name, capacity, (capacity-seats) AS available_seats FROM events WHERE event_name LIKE %s ORDER BY event_id ASC; """,(request.name,),)
+            found = read("""SELECT event_id, name, capacity, (capacity-seats) AS available_seats FROM events WHERE name LIKE %s ORDER BY event_id ASC; """,(request.name,),)
         else:
             found = read("""SELECT event_id, name, capacity (capacity-seats_taken) AS available_seats FROM events ORDER BY event_id ASC""")
         return pb.ListEventsResponse(events=found)
