@@ -4,7 +4,12 @@ package campus.registrations.v1;
 
 service RegistrationService {
   rpc CancelBooking(BookingId) returns (Empty);
+  rpc CreateParticipant(CreateParticipantRequest) returns (Participant);
+  rpc GetParticipant(ParticipantId) returns (Participant);
 }
 
 message BookingId { int64 booking_id = 1; }
 message Empty {}
+message CreateParticipantRequest { string name = 1; }
+message ParticipantId { int64 participant_id = 1; }
+message Participant { int64 participant_id = 1; string name = 2; }
