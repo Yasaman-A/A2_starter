@@ -1,3 +1,9 @@
+# Python 3.14 removed old TLS names that mysql-connector 9.5 still expects; add them back.
+import ssl
+for _name in ("PROTOCOL_TLSv1", "PROTOCOL_TLSv1_1", "PROTOCOL_TLSv1_2"):
+    if not hasattr(ssl, _name):
+        setattr(ssl, _name, ssl.PROTOCOL_TLS_CLIENT)
+
 import json
 from concurrent import futures
 
