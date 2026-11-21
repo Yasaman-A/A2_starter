@@ -76,7 +76,6 @@ def add_participant():
 @app.get("/api/v1/participants/<int:participant_id>")
 def get_participant(participant_id):
     abort(501, "TODO task 3: implement GET /api/v1/participants/<participant_id>")
-    #return jsonify(fields(participants.GetParticipant(event_pb2.ParticipantId(participant_id=participant_id))))
 
 
 @app.get("/api/v1/events/<int:event_id>/registrations")
