@@ -55,7 +55,7 @@ class EventService(rpc.EventServiceServicer):
         sets, args = [], []
         if request.HasField("name"):
             if not request.name.strip():
-                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is reqiured")
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
             sets.append("name = %s")
             args.append(request.name.strip())
         if request.HasField("capacity"):
