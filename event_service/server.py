@@ -41,10 +41,12 @@ class EventService(rpc.EventServiceServicer):
         else:
             found = read("""SELECT event_id, name, capacity, (capacity-seats_taken) AS available_seats FROM events ORDER BY event_id ASC""")
         return pb.ListEventsResponse(events=found)
+
+    
     def CreateEvents(self, request, context):
         name = request.name.strip()
         if not name:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
+            context.about(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
         new_id = write("INSERT INTO events (name,capacity,seats_taken) VALUES (%s,%s,0)", (name, request.capacity))
         return self.GetEvent(pb.EventId(event_id=new_id), context)
 
@@ -55,7 +57,7 @@ class EventService(rpc.EventServiceServicer):
         sets, args = [], []
         if request.HasField("name"):
             if not request.name.strip():
-                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is reqiured")
             sets.append("name = %s")
             args.append(request.name.strip())
         if request.HasField("capacity"):
@@ -68,6 +70,13 @@ class EventService(rpc.EventServiceServicer):
                   (*args, request.event_id))
         return self.GetEvent(pb.EventId(event_id = request.event_id), context)
 
+    
+    def DeleteEvent(self, request, context):
+        current = self.GetEvent(request, context)
+        if current.capacity - current.available_seats > 0:
+            context.abort(grpc.StatusCode.FAILED_PRECONDITION, "Event has bookings")
+        write("DELETE FROM events WHERE event_id = %s", (request.event_id,))
+        return pb.Empty()
 
 
 
