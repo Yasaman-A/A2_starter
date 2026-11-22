@@ -41,29 +41,6 @@ class EventService(rpc.EventServiceServicer):
             context.abort(grpc.StatusCode.NOT_FOUND, "Event not found")
         return pb.Event(**found[0])
 
-    def ReserveSeat(self, request, context):
-        # Check that the event exists
-        self.GetEvent(request, context)
-
-        with mysql.connector.connect(**CONFIG["db"]) as db:
-            with db.cursor() as cursor:
-                cursor.execute(
-                    """UPDATE events
-                       SET seats_taken = seats_taken + 1
-                       WHERE event_id = %s
-                       AND seats_taken < capacity""",
-                    (request.event_id,)
-                )
-                db.commit()
-
-                if cursor.rowcount == 0:
-                    context.abort(
-                        grpc.StatusCode.RESOURCE_EXHAUSTED,
-                        "Event is full"
-                    )
-
-        return pb.Empty()
-
     def ReleaseSeat(self, request, context):
         self.GetEvent(request, context)
         write("UPDATE events SET seats_taken = seats_taken - 1 WHERE event_id = %s", (request.event_id,))

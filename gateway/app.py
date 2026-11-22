@@ -97,28 +97,8 @@ def list_bookings(event_id):
 
 @app.post("/api/v1/registrations")
 def book():
-    data = request.get_json(silent=True)
+    abort(501, "TODO task 4: implement POST /api/v1/registrations")
 
-    if not isinstance(data, dict):
-        abort(400, "A JSON request body is required")
-
-    event_id = data.get("event_id")
-    participant_id = data.get("participant_id")
-
-    if type(event_id) is not int or event_id <= 0:
-        abort(400, "event_id must be a positive integer")
-
-    if type(participant_id) is not int or participant_id <= 0:
-        abort(400, "participant_id must be a positive integer")
-
-    result = registrations.CreateBooking(
-        registration_pb2.CreateBookingRequest(
-            event_id=event_id,
-            participant_id=participant_id
-        )
-    )
-
-    return jsonify(fields(result)), 201
 
 @app.delete("/api/v1/registrations/<int:booking_id>")
 def cancel(booking_id):
