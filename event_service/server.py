@@ -44,7 +44,7 @@ class EventService(rpc.EventServiceServicer):
     def CreateEvents(self, request, context):
         name = request.name.strip()
         if not name:
-            context.about(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
         new_id = write("INSERT INTO events (name,capacity,seats_taken) VALUES (%s,%s,0)", (name, request.capacity))
         return self.GetEvent(pb.EventId(event_id=new_id), context)
 
