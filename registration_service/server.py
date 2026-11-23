@@ -44,6 +44,15 @@ class RegistrationService(rpc.RegistrationServiceServicer):
             call(self.events.ReleaseSeat, event_pb2.EventId(event_id=found[0]["event_id"]), context)
         return pb.Empty()
 
+    def GetParticipant(self, request, context):
+        found = read(
+            "SELECT participant_id, name FROM participants WHERE participant_id = %s",
+            (request.participant_id,),
+        )
+        if not found:
+            context.abort(grpc.StatusCode.NOT_FOUND, "Participant not found")
+        return pb.Participant(**found[0])
+
 
 events = event_pb2_grpc.EventServiceStub(grpc.insecure_channel(CONFIG["event_service"]))
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
