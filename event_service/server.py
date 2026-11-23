@@ -34,6 +34,19 @@ class EventService(rpc.EventServiceServicer):
         self.GetEvent(request, context)
         write("UPDATE events SET seats_taken = seats_taken - 1 WHERE event_id = %s", (request.event_id,))
         return pb.Empty()
+
+    # ReserveSeat check if there are seats in a event and if there is reserves the seat
+    # Input: 
+    #   event_id: Id of desired event to be booked
+    # Output: 
+    #   (Empty): Success event in database adds to seat taken
+    #   (409): Full event
+    def ReserveSeat(self, request, context):
+        if (self.GetEvent(request, context).available_seats <= 0):
+            context.abort(grpc.StatusCode.RESOURCE_EXHAUSTED, "Event is full")
+        write("UPDATE events SET seats_taken = seats_taken + 1 WHERE event_id = %s", (request.event_id,))
+        return pb.Empty()
+
     def ListEvents(self, request, context):
         if request.HasField("name") and request.name:
             found = read("""SELECT event_id, name, capacity,

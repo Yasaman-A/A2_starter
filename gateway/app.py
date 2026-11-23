@@ -79,23 +79,39 @@ def delete_event(event_id):
 
 @app.post("/api/v1/participants")
 def add_participant():
-    abort(501, "TODO task 3: implement POST /api/v1/participants")
+    data = request.get_json(silent=True)
 
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    name = data.get("name")
+    if not isinstance(name, str) or not name.strip():
+        return jsonify({"error": "Participant name must be a non-empty string"}), 400
+
+    created = registrations.CreateParticipant(
+        registration_pb2.CreateParticipantRequest(name=name.strip())
+    )
+
+    return jsonify(fields(created)), 201
 
 @app.get("/api/v1/participants/<int:participant_id>")
 def get_participant(participant_id):
-    abort(501, "TODO task 3: implement GET /api/v1/participants/<participant_id>")
+    #if not isinstance(participant_id, int):
+    #    context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid Participant ID")
+    return jsonify(fields(registrations.GetParticipant(registration_pb2.ParticipantId(participant_id = participant_id)))), 200
 
 
 @app.get("/api/v1/events/<int:event_id>/registrations")
 def list_bookings(event_id):
     abort(501, "TODO task 4: implement GET /api/v1/events/<event_id>/registrations")
 
-
+#make it not return in alphabetical order this one is fine but what about other functions?
 @app.post("/api/v1/registrations")
 def book():
-    abort(501, "TODO task 4: implement POST /api/v1/registrations")
-
+    eventParticipantPair = request.get_json(silent = False)
+    event = eventParticipantPair.get("event_id")
+    participant = eventParticipantPair.get("participant_id")
+    return jsonify(fields(registrations.CreateBooking(registration_pb2.Booking(event_id = event, participant_id = participant)))), 201
 
 @app.delete("/api/v1/registrations/<int:booking_id>")
 def cancel(booking_id):

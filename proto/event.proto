@@ -5,6 +5,7 @@ package campus.events.v1;
 service EventService {
   rpc GetEvent(EventId) returns (Event);
   rpc ReleaseSeat(EventId) returns (Empty);
+  rpc ReserveSeat(EventId) returns (Empty);
   rpc ListEvents(ListEventsRequest) returns(ListEventsResponse);
   rpc CreateEvent(CreateEventRequest) returns(Event);
   rpc PatchEvent(PatchEventRequest) returns(Event);
