@@ -53,19 +53,51 @@ def get_event(event_id):
     return jsonify(fields(events.GetEvent(event_pb2.EventId(event_id=event_id))))
 
 
+STAFF_ROUTES = {"add_event", "edit_event", "delete_event"}
+MAX = 2**31 - 1
+
+@app.before_request
+def require_staff_token():
+    if request.endpoint in STAFF_ROUTES:
+        if request.headers.get("Authorization") != f"Bearer {CONFIG['staff_token']}":
+            abort(401, "Missing or invalid staff token")
+        
+def valid_capacity(value):
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= MAX
+
+
 @app.post("/api/v1/events")
 def add_event():
-    abort(501, "TODO task 2: implement POST /api/v1/events")
+    body = request.get_json(silent=True)
+    if (not isinstance(body, dict) or not isinstance(body.get("name"), str)
+            or not valid_capacity(body.get("capacity"))):
+        abort(400, "name must be a string and non negative ")
+    reply = events.CreateEvents(event_pb2.CreateEventsRequest(
+        name=body["name"], capacity=body["capacity"]))
+    return jsonify(fields(reply)), 201
 
 
 @app.patch("/api/v1/events/<int:event_id>")
 def edit_event(event_id):
-    abort(501, "TODO task 2: implement PATCH /api/v1/events/<event_id>")
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not ({"name", "capacity"} & body.keys()):
+        abort(400, "send name and/or capacity")
+    if "name" in body and not isinstance(body["name"], str):
+        abort(400, "name must be a string")
+    if "capacity" in body and not valid_capacity(body["capacity"]):
+        abort(400, "capacity must be a non-negative integer")
+    update = event_pb2.UpdateEventRequest(event_id=event_id)
+    if "name" in body:
+        update.name = body["name"]
+    if "capacity" in body:
+        update.capacity = body["capacity"]
+    return jsonify(fields(events.UpdateEvent(update)))
 
 
 @app.delete("/api/v1/events/<int:event_id>")
 def delete_event(event_id):
-    abort(501, "TODO task 2: implement DELETE /api/v1/events/<event_id>")
+    events.DeleteEvent(event_pb2.EventId(event_id=event_id))
+    return "", 204
 
 
 @app.post("/api/v1/participants")
