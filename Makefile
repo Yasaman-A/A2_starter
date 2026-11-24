@@ -2,7 +2,7 @@ PYTHON ?= python3
 
 install:
 	$(PYTHON) -m venv .venv
-	.venv/bin/pip install -r requirements.txt
+	.venv/Scripts/pip install -r requirements.txt
 
 gen:
 	$(MAKE) -C event_service gen
