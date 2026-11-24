@@ -35,6 +35,14 @@ def manyfields(messages):
     return [fields(message) for message in messages]
 
 
+@app.before_request
+def require_staff_token():
+    if request.endpoint in {"add_event", "edit_event", "delete_event"}:
+        authorization = request.headers.get("Authorization", "")
+        if authorization != f"Bearer {CONFIG['staff_token']}":
+            abort(401, "Staff token required")
+
+
 @app.errorhandler(grpc.RpcError)
 def rpc_error(error):
     return jsonify(error=error.details()), STATUS.get(error.code(), 500)
@@ -58,9 +66,25 @@ def get_event(event_id):
 
 @app.post("/api/v1/events")
 def add_event():
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
-    event = event_pb2.CreateEventRequest(**data)
+    if not isinstance(data, dict):
+        abort(400, "Expected a JSON object")
+    if "name" not in data or "capacity" not in data:
+        abort(400, "Name and capacity are required")
+    if not isinstance(data["name"], str):
+        abort(400, "Event name must be a string")
+
+    capacity = data["capacity"]
+    if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity < 0:
+        abort(400, "Capacity must be a non-negative integer")
+    if capacity > 2**31 - 1:
+        abort(400, "Capacity is too large")
+
+    event = event_pb2.CreateEventRequest(
+        name=data["name"],
+        capacity=capacity,
+    )
 
     result = events.CreateEvent(event)
 

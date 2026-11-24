@@ -49,7 +49,7 @@ class EventService(rpc.EventServiceServicer):
             events=found
         )
     def CreateEvent(self, request, context):
-        if not request.name:
+        if not request.name.strip():
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Event name is required")
 
         if request.capacity <= 0:
