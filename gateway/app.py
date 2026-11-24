@@ -93,7 +93,32 @@ def add_event():
 
 @app.patch("/api/v1/events/<int:event_id>")
 def edit_event(event_id):
-    abort(501, "TODO task 2: implement PATCH /api/v1/events/<event_id>")
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body"}), 400
+
+    has_name = "name" in data
+    has_capacity = "capacity" in data
+
+    if not has_name and not has_capacity:
+        return jsonify({"error": "At least one of 'name' or 'capacity' is required"}), 400
+
+    req_kwargs = {"event_id": event_id}
+
+    if has_name:
+        name = data["name"]
+        if not isinstance(name, str) or not name.strip():
+            return jsonify({"error": "Event name must be a non-empty string"}), 400
+        req_kwargs["name"] = name.strip()
+
+    if has_capacity:
+        capacity = data["capacity"]
+        if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity <= 0:
+            return jsonify({"error": "Event capacity must be a positive integer"}), 400
+        req_kwargs["capacity"] = capacity
+
+    updated = events.UpdateEvent(event_pb2.UpdateEventRequest(**req_kwargs))
+    return jsonify(fields(updated)), 200
 
 
 @app.delete("/api/v1/events/<int:event_id>")
