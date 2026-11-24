@@ -65,6 +65,18 @@ class EventService(rpc.EventServiceServicer):
 
         return self.GetEvent(pb.EventId(event_id=event_id), context)
 
+    def DeleteEvent(self, request, context):
+        found = read("SELECT event_id, seats_taken FROM events WHERE event_id = %s",
+                     (request.event_id,))
+        if not found:
+            context.abort(grpc.StatusCode.NOT_FOUND, "Event not found")
+
+        if found[0]["seats_taken"] > 0:
+            context.abort(grpc.StatusCode.FAILED_PRECONDITION, "Event has existing bookings")
+
+        write("DELETE FROM events WHERE event_id = %s", (request.event_id,))
+        return pb.Empty()
+
     def BeforeRequest(self, request, context):
         # Only protect event write endpoints
         if (request.method in ("POST", "PATCH", "DELETE")):
@@ -74,7 +86,7 @@ class EventService(rpc.EventServiceServicer):
 
                 if authorization != expected:
                     return json.jsonify({"error": "Unauthorized"}), 401
-
+        
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
 rpc.add_EventServiceServicer_to_server(EventService(), server)
 server.add_insecure_port(CONFIG["listen"])
