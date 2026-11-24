@@ -12,6 +12,7 @@ import registration_pb2_grpc
 CONFIG = json.load(open("config.json"))
 STATUS = {
     grpc.StatusCode.INVALID_ARGUMENT: 400,
+    grpc.StatusCode.UNAUTHENTICATED: 401, ## <-- New
     grpc.StatusCode.NOT_FOUND: 404,
     grpc.StatusCode.ALREADY_EXISTS: 409,
     grpc.StatusCode.RESOURCE_EXHAUSTED: 409,
@@ -32,6 +33,14 @@ def fields(message):
 
 def manyfields(messages):
     return [fields(message) for message in messages]
+
+
+@app.before_request
+def require_staff_token():
+    if request.endpoint in {"add_event", "edit_event", "delete_event"}:
+        authorization = request.headers.get("Authorization", "")
+        if authorization != f"Bearer {CONFIG['staff_token']}":
+            abort(401, "Staff token required")
 
 
 @app.errorhandler(grpc.RpcError)
@@ -57,7 +66,29 @@ def get_event(event_id):
 
 @app.post("/api/v1/events")
 def add_event():
-    abort(501, "TODO task 2: implement POST /api/v1/events")
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        abort(400, "Expected a JSON object")
+    if "name" not in data or "capacity" not in data:
+        abort(400, "Name and capacity are required")
+    if not isinstance(data["name"], str):
+        abort(400, "Event name must be a string")
+
+    capacity = data["capacity"]
+    if isinstance(capacity, bool) or not isinstance(capacity, int) or capacity < 0:
+        abort(400, "Capacity must be a non-negative integer")
+    if capacity > 2**31 - 1:
+        abort(400, "Capacity is too large")
+
+    event = event_pb2.CreateEventRequest(
+        name=data["name"],
+        capacity=capacity,
+    )
+
+    result = events.CreateEvent(event)
+
+    return jsonify(fields(result)), 201
 
 
 @app.patch("/api/v1/events/<int:event_id>")
