@@ -64,7 +64,25 @@ class EventService(rpc.EventServiceServicer):
             context.abort(grpc.StatusCode.ALREADY_EXISTS, "Event already exists")
 
         return self.GetEvent(pb.EventId(event_id=event_id), context)
+    """
+    Updates the specified event data
 
+    Args:
+    request (UpdateEventRequest): contains event name, capacity, and event ID
+    context: gRPC context used for error handling 
+
+    Returns:
+        Event: Updated data values for the event
+
+    Errors:
+        INVALID_ARGUMENT: Invalid event ID (<=0)
+        INVALID_ARGUMENT: No provided fields
+        INVALID_ARGUMENT: Leaving Event name blank
+        INVALID_ARGUMENT: Event capacity has to be positive
+        NOT_FOUND: Event ID was not found 
+        FAILED_PRECONDITION: Changed capacity lower than booked seats
+
+    """
     def UpdateEvent(self, request, context):
         if request.event_id <= 0:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid event ID")
