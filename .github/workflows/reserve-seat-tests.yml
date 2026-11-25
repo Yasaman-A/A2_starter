@@ -1,0 +1,107 @@
+
+name: ReserveSeat Tests
+
+on:
+  push:
+    branches:
+      - task-4-reserve-seat
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-reserve-seat:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_ROOT_HOST: "%"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Generate protobuf bindings
+        run: make gen
+
+      - name: Prepare database
+        run: |
+          mysql -h 127.0.0.1 -u root -ptestpassword < event_service/schema.sql
+
+      - name: Configure test database
+        run: |
+          .venv/bin/python - <<'PY'
+          import json
+
+          path = "event_service/config.json"
+          with open(path) as f:
+              config = json.load(f)
+
+          config["db"]["password"] = "testpassword"
+
+          with open(path, "w") as f:
+              json.dump(config, f)
+          PY
+
+      - name: Start event service and test ReserveSeat
+        working-directory: event_service
+        env:
+          PYTHONPATH: generated
+        run: |
+          ../.venv/bin/python server.py &
+          ../.venv/bin/python - <<'PY'
+          import grpc
+          import event_pb2 as pb
+          import event_pb2_grpc as rpc
+
+          channel = grpc.insecure_channel("127.0.0.1:8081")
+          grpc.channel_ready_future(channel).result(timeout=30)
+          stub = rpc.EventServiceStub(channel)
+
+          event = pb.EventId(event_id=3)
+
+          before = stub.GetEvent(event, timeout=10)
+          assert before.available_seats == 1
+
+          stub.ReserveSeat(event, timeout=10)
+          print("PASS: Seat reserved successfully")
+
+          after = stub.GetEvent(event, timeout=10)
+          assert after.available_seats == 0
+          print("PASS: Available seats reduced by one")
+
+          try:
+              stub.ReserveSeat(event, timeout=10)
+              raise AssertionError("Full event accepted reservation")
+          except grpc.RpcError as e:
+              assert e.code() == grpc.StatusCode.RESOURCE_EXHAUSTED
+              print("PASS: Full event rejected reservation")
+
+          try:
+              stub.ReserveSeat(pb.EventId(event_id=999), timeout=10)
+              raise AssertionError("Nonexistent event accepted reservation")
+          except grpc.RpcError as e:
+              assert e.code() == grpc.StatusCode.NOT_FOUND
+              print("PASS: Nonexistent event rejected reservation")
+
+          assert stub.GetEvent(event, timeout=10).available_seats == 0
+          print("All ReserveSeat tests passed")
+          PY
