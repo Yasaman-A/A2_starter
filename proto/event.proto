@@ -6,6 +6,7 @@ service EventService {
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
   rpc CreateEvents(CreateEventsRequest) returns (Event);
   rpc GetEvent(EventId) returns (Event);
+  rpc ReserveSeat(EventId) returns (Empty);
   rpc ReleaseSeat(EventId) returns (Empty);
   rpc UpdateEvent(UpdateEventRequest) returns (Event);
   rpc DeleteEvent(EventId) returns (Empty);
