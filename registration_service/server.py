@@ -43,7 +43,20 @@ class RegistrationService(rpc.RegistrationServiceServicer):
             write("UPDATE bookings SET state = 'cancelled' WHERE booking_id = %s", (request.booking_id,))
             call(self.events.ReleaseSeat, event_pb2.EventId(event_id=found[0]["event_id"]), context)
         return pb.Empty()
+    """
+    Creates a new participant and stores it into the database
 
+    Args:
+        request: (CreateParticipantRequest) contains participants name
+        context: gRPC context used for error handling
+
+    Returns:
+        Participant: the created participant 
+
+    Errors:
+        INVALID_ARGUMENT: Participant name is blank 
+        ALREADY_EXISTS: Participant is already in the database
+    """
     def CreateParticipant(self, request, context):
         if not request.name:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Participant name is required")
