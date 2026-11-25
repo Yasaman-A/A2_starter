@@ -34,6 +34,7 @@ class EventService(rpc.EventServiceServicer):
         self.GetEvent(request, context)
         write("UPDATE events SET seats_taken = seats_taken - 1 WHERE event_id = %s", (request.event_id,))
         return pb.Empty()
+    
     def ListEvents(self, request, context):
         if request.HasField("name") and request.name:
             found = read("""SELECT event_id, name, capacity,
@@ -64,29 +65,31 @@ class EventService(rpc.EventServiceServicer):
             context.abort(grpc.StatusCode.ALREADY_EXISTS, "Event already exists")
 
         return self.GetEvent(pb.EventId(event_id=event_id), context)
-
+    
     def DeleteEvent(self, request, context):
-        found = read("SELECT event_id, seats_taken FROM events WHERE event_id = %s",
-                     (request.event_id,))
+        # Reject non-positive IDs early (gateway <int:…> can still pass negatives)
+        if request.event_id <= 0:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid event ID")
+
+        found = read(
+            """SELECT event_id, capacity, seats_taken,
+                      capacity - seats_taken AS available_seats
+               FROM events WHERE event_id = %s""",
+            (request.event_id,),
+        )
         if not found:
             context.abort(grpc.StatusCode.NOT_FOUND, "Event not found")
 
-        if found[0]["seats_taken"] > 0:
-            context.abort(grpc.StatusCode.FAILED_PRECONDITION, "Event has existing bookings")
+        event = found[0]
+        if event["seats_taken"] > 0:
+            context.abort(
+                grpc.StatusCode.FAILED_PRECONDITION,
+                "Cannot delete event that still has bookings",
+            )
 
         write("DELETE FROM events WHERE event_id = %s", (request.event_id,))
         return pb.Empty()
 
-    def BeforeRequest(self, request, context):
-        # Only protect event write endpoints
-        if (request.method in ("POST", "PATCH", "DELETE")):
-            if (request.path.startswith("/events")):
-                expected = f"Bearer {CONFIG['staff_token']}"
-                authorization = request.headers.get("Authorization", "")
-
-                if authorization != expected:
-                    return json.jsonify({"error": "Unauthorized"}), 401
-        
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=8))
 rpc.add_EventServiceServicer_to_server(EventService(), server)
 server.add_insecure_port(CONFIG["listen"])
